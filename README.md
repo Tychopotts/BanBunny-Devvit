@@ -1,147 +1,122 @@
-# Ban Bunny - Devvit App
+# BanBunny-Devvit
 
-A Reddit Devvit application that monitors subreddit bans and posts notifications to Discord with Giphy GIFs.
+A Reddit Devvit application that monitors subreddit bans and sends celebratory notifications to Discord with random Giphy GIFs.
+
+## Overview
+
+BanBunny-Devvit is a native Reddit application built on the [Devvit platform](https://developers.reddit.com/docs/) that brings joy to moderation actions. When moderators issue bans, the app posts a fun notification to Discord complete with a random GIF to celebrate keeping the community safe.
+
+This project is a reimplementation of [BanBunny](../BanBunny) (originally a .NET application) as a Devvit app, eliminating the need for self-hosting while gaining native Reddit API access.
 
 ## Features
 
-- **Real-time Ban Detection**: Triggers instantly when moderators issue bans
-- **Historical Backfill**: On installation, imports existing ban history into Redis storage
-- **Discord Notifications**: Posts formatted embeds to Discord via webhook
-- **Giphy Integration**: Includes random GIFs in ban announcements
-- **Mod Log Storage**: Maintains a Redis-based log of all moderation actions
+- **Real-time Detection** — Triggers instantly when moderators issue bans
+- **Historical Backfill** — Imports existing ban history on installation
+- **Discord Notifications** — Sends rich embed messages to configured webhook
+- **Giphy Integration** — Includes random celebratory GIFs in announcements
+- **Mod Log Storage** — Maintains Redis-based log of all moderation actions
+- **Zero Hosting** — Runs entirely on Reddit's infrastructure
 
-## Prerequisites
+## Documentation
 
-- [Node.js](https://nodejs.org/) v18 or later
-- [Devvit CLI](https://developers.reddit.com/docs/) installed globally
-- A Reddit account with moderator access to a subreddit
-- Discord webhook URL
-- Giphy API key
+- [Devvit Docs](https://developers.reddit.com/docs/) — Official platform documentation
 
-## Installation
+## Project Status
 
-### 1. Install Devvit CLI
+🚧 **In Development**
+
+## Getting Started
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (v18+)
+- [Devvit CLI](https://developers.reddit.com/docs/quickstart)
+- A subreddit where you have moderator permissions
+- A Discord server with webhook access
+- A [Giphy API key](https://developers.giphy.com/)
+
+### Installation
 
 ```bash
+# Install Devvit CLI
 npm install -g devvit
-```
 
-### 2. Login to Reddit
-
-```bash
+# Login to Reddit
 devvit login
-```
 
-### 3. Install Dependencies
+# Clone and enter project
+cd BanBunny-Devvit
 
-```bash
-cd banbunny-devvit
+# Install dependencies
 npm install
+
+# Start development
+devvit playtest <your-subreddit>
 ```
 
-### 4. Upload to Reddit
+### Configuration
 
-```bash
-devvit upload
-```
+After installing the app on your subreddit, configure it through Reddit's mod tools:
 
-### 5. Install on Your Subreddit
+1. Go to your subreddit's Mod Tools
+2. Find BanBunny-Devvit in installed apps
+3. Configure the following settings:
+   - **Discord Webhook URL** (required)
+   - **Giphy API Key** (required)
+   - **Enable Notifications** toggle
 
-After uploading, install the app on your subreddit through the Reddit mod tools or via:
+### Getting API Keys
 
-```bash
-devvit install <your-subreddit-name>
-```
-
-## Configuration
-
-After installation, configure the app settings in your subreddit's mod tools:
-
-| Setting | Description |
-|---------|-------------|
-| **Discord Webhook URL** | Your Discord channel's webhook URL for ban notifications |
-| **Giphy API Key** | Your Giphy API key for fetching random GIFs |
-| **Enable Notifications** | Toggle to enable/disable Discord notifications |
-
-### Getting a Discord Webhook URL
-
+**Discord Webhook:**
 1. Go to your Discord server settings
 2. Navigate to Integrations → Webhooks
-3. Create a new webhook or copy an existing one's URL
+3. Create a new webhook and copy the URL
 
-### Getting a Giphy API Key
-
+**Giphy API Key:**
 1. Visit [Giphy Developers](https://developers.giphy.com/)
 2. Create an app to get your API key
 
-## Development
-
-### Local Testing (Playtest)
-
-```bash
-devvit playtest <your-test-subreddit>
-```
-
-This allows you to test changes in real-time on a test subreddit.
-
-### View Logs
-
-```bash
-devvit logs <your-subreddit-name>
-```
-
-### Upload New Version
-
-```bash
-devvit upload
-```
-
 ## Data Storage
 
-The app uses Redis for persistent storage with the following structure:
+The app uses Redis for persistent storage:
 
-### Ban Logs
-- `ban:{banId}` - Hash containing ban details
-- `bans:timeline` - Sorted set of all bans by timestamp
-- `bans:subreddit:{name}` - Sorted set of bans per subreddit
+| Key Pattern | Description |
+|-------------|-------------|
+| `ban:{banId}` | Hash containing ban details |
+| `bans:timeline` | Sorted set of all bans by timestamp |
+| `bans:subreddit:{name}` | Sorted set of bans per subreddit |
+| `modlog:{logId}` | Hash containing mod action details |
+| `app:initialized` | Timestamp of initial installation |
 
-### Mod Logs
-- `modlog:{logId}` - Hash containing mod action details
-- `modlogs:timeline` - Sorted set of all mod actions by timestamp
+## Architecture
 
-### App State
-- `app:initialized` - Timestamp of initial installation
-- `app:backfillCount` - Number of historical bans imported
-
-## Permissions
-
-This app requires the following Devvit capabilities:
-
-- `redditAPI` - Access to Reddit's API for fetching mod logs
-- `redis` - Persistent data storage
-- `http` - External API calls to Discord and Giphy
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Reddit    │────▶│  BanBunny   │────▶│   Discord   │
+│  Ban Event  │     │   (main.ts) │     │   Webhook   │
+└─────────────┘     └─────────────┘     └─────────────┘
+                          │
+                    ┌─────┴─────┐
+                    ▼           ▼
+              ┌──────────┐ ┌──────────┐
+              │  Giphy   │ │  Redis   │
+              │   API    │ │ Storage  │
+              └──────────┘ └──────────┘
+```
 
 ## Troubleshooting
 
-### Discord notifications not sending
-1. Verify the webhook URL is correct in app settings
-2. Check that "Enable Notifications" is turned on
-3. View logs with `devvit logs` for error messages
-
-### Historical backfill incomplete
-- Reddit's mod log API may have pagination limits
-- Very old data might not be accessible
-- Check logs for any errors during backfill
-
-### Giphy GIFs not loading
-1. Verify your Giphy API key is correct
-2. The app falls back to a default GIF if the API fails
-
-## Related Projects
-
-- [BanBunny (.NET)](../BanBunny/) - The original .NET implementation
+| Issue | Solution |
+|-------|----------|
+| Discord not sending | Verify webhook URL and enable notifications |
+| Backfill incomplete | Check logs; Reddit API may limit old data |
+| GIFs not loading | Verify Giphy API key; app uses fallback GIF |
 
 ## License
 
 See [LICENSE](../BanBunny/LICENSE) for details.
 
+## Related
+
+- [Original BanBunny (.NET)](../BanBunny) — The original implementation
+- [Devvit Docs](https://developers.reddit.com/docs/) — Official platform documentation
