@@ -1,0 +1,10 @@
+name: ban-bunny
+version: 1.0.0
+description: Monitors subreddit bans and posts notifications to Discord with Giphy GIFs
+
+# Required Devvit capabilities
+capabilities:
+  modLog: true        # Access mod action events and triggers
+  redis: true         # Data storage for ban/mod logs
+  http: true          # External API calls (Discord webhooks, Giphy API)
+
