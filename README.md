@@ -119,7 +119,7 @@ The app uses Redis for persistent storage:
 
 ## License
 
-See [LICENSE](../BanBunny/LICENSE) for details.
+See [LICENSE](../LICENSE) for details.
 
 ## Related
 
