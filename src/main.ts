@@ -1,4 +1,4 @@
-import { Devvit, SettingsClient, TriggerContext, ModAction } from '@devvit/public-api';
+import { Devvit, TriggerContext } from '@devvit/public-api';
 
 // Configure Devvit with required capabilities
 Devvit.configure({
@@ -16,17 +16,15 @@ Devvit.addSettings([
     name: 'discordWebhookUrl',
     label: 'Discord Webhook URL',
     type: 'string',
-    isSecret: true,
     scope: 'installation',
-    helpText: 'The Discord webhook URL for ban notifications',
+    helpText: 'The Discord webhook URL for ban notifications (only visible to mods)',
   },
   {
     name: 'giphyApiKey',
     label: 'Giphy API Key',
     type: 'string',
-    isSecret: true,
     scope: 'installation',
-    helpText: 'Your Giphy API key for fetching random GIFs',
+    helpText: 'Your Giphy API key for fetching random GIFs (only visible to mods)',
   },
   {
     name: 'enableNotifications',
@@ -253,15 +251,15 @@ Devvit.addTrigger({
       let backfillCount = 0;
 
       for await (const action of modLog) {
-        // Skip unbans
-        if (action.action === 'unbanuser') continue;
+        // Skip unbans (we're filtering by 'banuser' type, but double-check)
+        if (action.type === 'unbanuser') continue;
         // Skip AutoModerator actions
         if (action.target?.author === 'AutoModerator') continue;
 
         const banData: BanLogData = {
           banId: action.id,
           user: action.target?.author || 'unknown',
-          mod: action.moderator?.username || 'unknown',
+          mod: action.moderatorName || 'unknown',
           reason: action.details || '',
           duration: action.description || 'permanent',
           subreddit: subredditName,
@@ -285,25 +283,61 @@ Devvit.addTrigger({
 });
 
 // ============================================================================
+// Helper: Fetch ban details from mod log
+// ============================================================================
+
+async function fetchBanDetails(
+  context: TriggerContext,
+  subredditName: string,
+  targetUsername: string
+): Promise<{ reason: string; duration: string }> {
+  try {
+    // Query recent bans from mod log to get full details
+    const modLog = await context.reddit.getModerationLog({
+      subredditName: subredditName,
+      type: 'banuser',
+      limit: 10, // Check recent bans
+    });
+
+    // Find the matching ban for this user
+    for await (const action of modLog) {
+      if (action.target?.author === targetUsername) {
+        return {
+          reason: action.details || '',
+          duration: action.description || 'permanent',
+        };
+      }
+    }
+
+    console.log(`Could not find ban details for ${targetUsername} in mod log`);
+    return { reason: '', duration: 'permanent' };
+  } catch (error) {
+    console.error('Error fetching ban details from mod log:', error);
+    return { reason: '', duration: 'permanent' };
+  }
+}
+
+// ============================================================================
 // ModAction Trigger - Real-time Ban Detection
 // ============================================================================
 
 Devvit.addTrigger({
   event: 'ModAction',
   onEvent: async (event, context) => {
-    const action = event as ModAction;
+    // The trigger event uses proto ModAction type with: action, id, targetUser, moderator, subreddit
+    const actionType = event.action;
 
     // Skip if not a ban action
-    if (action.action !== 'banuser') {
+    if (actionType !== 'banuser') {
       // Still store non-ban mod actions for logging
-      if (action.action !== 'unbanuser') {
+      if (actionType !== 'unbanuser') {
         const modData: ModLogData = {
-          logId: action.actionId ?? `modlog-${Date.now()}`,
-          action: action.action ?? 'unknown',
-          targetUser: action.targetUser?.name ?? 'unknown',
-          mod: action.moderator?.name ?? 'unknown',
-          details: action.details ?? '',
-          subreddit: action.subreddit?.name ?? 'unknown',
+          logId: event.id ?? `modlog-${Date.now()}`,
+          action: actionType ?? 'unknown',
+          targetUser: event.targetUser?.name ?? 'unknown',
+          mod: event.moderator?.name ?? 'unknown',
+          details: '',
+          subreddit: event.subreddit?.name ?? 'unknown',
           timestamp: Date.now().toString(),
         };
         await storeModLog(context, modData);
@@ -311,28 +345,28 @@ Devvit.addTrigger({
       return;
     }
 
+    const targetUser = event.targetUser?.name ?? 'unknown';
+    const subredditName = event.subreddit?.name ?? 'unknown';
+
     // Skip AutoModerator bans
-    if (action.targetUser?.name === 'AutoModerator') {
+    if (targetUser === 'AutoModerator') {
       console.log('Skipping AutoModerator ban');
       return;
     }
 
-    // Skip unbans
-    if (action.action === 'unbanuser') {
-      console.log('Skipping unban action');
-      return;
-    }
+    console.log(`New ban detected: ${targetUser} by ${event.moderator?.name}`);
 
-    console.log(`New ban detected: ${action.targetUser?.name} by ${action.moderator?.name}`);
+    // Fetch ban details (reason, duration) from mod log
+    const banDetails = await fetchBanDetails(context, subredditName, targetUser);
 
-    // Build ban data object
+    // Build ban data object with full details
     const banData: BanLogData = {
-      banId: action.actionId ?? `ban-${Date.now()}`,
-      user: action.targetUser?.name ?? 'unknown',
-      mod: action.moderator?.name ?? 'unknown',
-      reason: action.details ?? '',
-      duration: action.description ?? 'permanent',
-      subreddit: action.subreddit?.name ?? 'unknown',
+      banId: event.id ?? `ban-${Date.now()}`,
+      user: targetUser,
+      mod: event.moderator?.name ?? 'unknown',
+      reason: banDetails.reason,
+      duration: banDetails.duration,
+      subreddit: subredditName,
       timestamp: Date.now().toString(),
     };
 

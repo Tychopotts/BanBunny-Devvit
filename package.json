@@ -1,6 +1,6 @@
 {
-  "name": "ban-bunny",
-  "version": "1.0.0",
+  "name": "banbunny-devvit",
+  "version": "0.0.0",
   "description": "Monitors subreddit bans and posts notifications to Discord",
   "type": "module",
   "main": "src/main.ts",
@@ -10,8 +10,9 @@
     "logs": "devvit logs"
   },
   "devDependencies": {
-    "@devvit/public-api": "^0.12.0",
+    "@devvit/public-api": "0.12.5",
     "typescript": "^5.0.0"
-  }
+  },
+  "private": true,
+  "license": "BSD-3-Clause"
 }
-

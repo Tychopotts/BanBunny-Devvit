@@ -50,9 +50,14 @@ cd BanBunny-Devvit
 # Install dependencies
 npm install
 
-# Start development
+# Upload app to Reddit (required before first playtest)
+devvit upload
+
+# Start development/testing on your subreddit
 devvit playtest <your-subreddit>
 ```
+
+> **Note:** You must run `devvit upload` at least once to register your app with Reddit's servers before you can playtest. The upload command creates the app on Reddit's platform.
 
 ### Configuration
 
