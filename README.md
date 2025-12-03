@@ -6,7 +6,7 @@ A Reddit Devvit application that monitors subreddit bans and sends celebratory n
 
 BanBunny-Devvit is a native Reddit application built on the [Devvit platform](https://developers.reddit.com/docs/) that brings joy to moderation actions. When moderators issue bans, the app posts a fun notification to Discord complete with a random GIF to celebrate keeping the community safe.
 
-This project is a reimplementation of [BanBunny](../BanBunny) (originally a .NET application) as a Devvit app, eliminating the need for self-hosting while gaining native Reddit API access.
+This project is a reimplementation of [BanBunny](https://github.com/GoddessOfTest/BanBunny) (originally a .NET application) as a Devvit app, eliminating the need for self-hosting while gaining native Reddit API access.
 
 ## Features
 
@@ -118,5 +118,5 @@ See [LICENSE](../BanBunny/LICENSE) for details.
 
 ## Related
 
-- [Original BanBunny (.NET)](../BanBunny) — The original implementation
+- [Original BanBunny (.NET)](https://github.com/GoddessOfTest/BanBunny) — The original implementation
 - [Devvit Docs](https://developers.reddit.com/docs/) — Official platform documentation
