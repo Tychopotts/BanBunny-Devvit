@@ -4,7 +4,10 @@ import { Devvit, TriggerContext } from '@devvit/public-api';
 Devvit.configure({
   redditAPI: true,
   redis: true,
-  http: true,
+  http: {
+    // Whitelist external domains for HTTP fetch
+    domains: ['api.giphy.com', 'discord.com', 'discordapp.com'],
+  },
 });
 
 // ============================================================================
