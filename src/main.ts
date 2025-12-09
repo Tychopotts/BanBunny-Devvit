@@ -6,7 +6,7 @@ Devvit.configure({
   redis: true,
   http: {
     // Whitelist external domains for HTTP fetch
-    domains: ['giphy.com','discord.com', 'discordapp.com'],
+    domains: ['api.giphy.com', 'discord.com', 'discordapp.com', 'hooks.slack.com'],
   },
 });
 
@@ -15,27 +15,66 @@ Devvit.configure({
 // ============================================================================
 
 Devvit.addSettings([
+  // Discord Settings Group
   {
-    name: 'discordWebhookUrl',
-    label: 'Discord Webhook URL',
-    type: 'string',
-    scope: 'installation',
-    helpText: 'The Discord webhook URL for ban notifications (only visible to mods)',
+    type: 'group',
+    label: 'Discord Settings',
+    helpText: 'Configure Discord webhook notifications',
+    fields: [
+      {
+        name: 'enableDiscordNotifications',
+        label: 'Enable Discord Notifications',
+        type: 'boolean',
+        defaultValue: true,
+        scope: 'installation',
+        helpText: 'Toggle Discord ban notifications on/off',
+      },
+      {
+        name: 'discordWebhookUrl',
+        label: 'Discord Webhook URL',
+        type: 'string',
+        scope: 'installation',
+        helpText: 'Required if Discord notifications are enabled. Get this from Discord Server Settings → Integrations → Webhooks',
+      },
+    ],
   },
+  // Slack Settings Group
   {
-    name: 'giphyApiKey',
-    label: 'Giphy API Key',
-    type: 'string',
-    scope: 'installation',
-    helpText: 'Your Giphy API key for fetching random GIFs (only visible to mods)',
+    type: 'group',
+    label: 'Slack Settings',
+    helpText: 'Configure Slack webhook notifications',
+    fields: [
+      {
+        name: 'enableSlackNotifications',
+        label: 'Enable Slack Notifications',
+        type: 'boolean',
+        defaultValue: false,
+        scope: 'installation',
+        helpText: 'Toggle Slack ban notifications on/off',
+      },
+      {
+        name: 'slackWebhookUrl',
+        label: 'Slack Webhook URL',
+        type: 'string',
+        scope: 'installation',
+        helpText: 'Required if Slack notifications are enabled. Get this from api.slack.com/apps → Incoming Webhooks',
+      },
+    ],
   },
+  // General Settings
   {
-    name: 'enableNotifications',
-    label: 'Enable Discord Notifications',
-    type: 'boolean',
-    defaultValue: true,
-    scope: 'installation',
-    helpText: 'Toggle Discord ban notifications on/off',
+    type: 'group',
+    label: 'General Settings',
+    helpText: 'Configure general app behavior',
+    fields: [
+      {
+        name: 'giphyApiKey',
+        label: 'Giphy API Key',
+        type: 'string',
+        scope: 'installation',
+        helpText: 'Optional. Get from developers.giphy.com. If not set, a default GIF will be used.',
+      },
+    ],
   },
 ]);
 
@@ -165,12 +204,13 @@ async function fetchGiphy(context: TriggerContext): Promise<string> {
 
 async function sendDiscordNotification(
   context: TriggerContext,
-  banData: BanLogData
+  banData: BanLogData,
+  gifUrl: string
 ): Promise<void> {
   try {
     const settings = await context.settings.getAll();
     const webhookUrl = settings.discordWebhookUrl as string;
-    const notificationsEnabled = settings.enableNotifications as boolean;
+    const notificationsEnabled = settings.enableDiscordNotifications as boolean;
 
     if (!notificationsEnabled) {
       console.log('Discord notifications are disabled');
@@ -178,12 +218,9 @@ async function sendDiscordNotification(
     }
 
     if (!webhookUrl) {
-      console.error('Discord webhook URL not configured');
+      console.log('Discord webhook URL not configured');
       return;
     }
-
-    // Fetch a random Giphy GIF
-    const gifUrl = await fetchGiphy(context);
 
     // Determine if permanent ban
     const isPermanent = !banData.duration || banData.duration === 'permanent';
@@ -224,6 +261,113 @@ async function sendDiscordNotification(
   } catch (error) {
     console.error('Error sending Discord notification:', error);
   }
+}
+
+async function sendSlackNotification(
+  context: TriggerContext,
+  banData: BanLogData,
+  gifUrl: string
+): Promise<void> {
+  try {
+    const settings = await context.settings.getAll();
+    const webhookUrl = settings.slackWebhookUrl as string;
+    const notificationsEnabled = settings.enableSlackNotifications as boolean;
+
+    if (!notificationsEnabled) {
+      console.log('Slack notifications are disabled');
+      return;
+    }
+
+    if (!webhookUrl) {
+      console.log('Slack webhook URL not configured');
+      return;
+    }
+
+    // Determine if permanent ban
+    const isPermanent = !banData.duration || banData.duration === 'permanent';
+    const durationText = isPermanent ? 'Permanent' : `${banData.duration} days`;
+    const banTime = new Date(parseInt(banData.timestamp)).toISOString();
+
+    // Build Slack message with blocks for rich formatting
+    const slackPayload = {
+      blocks: [
+        {
+          type: 'header',
+          text: {
+            type: 'plain_text',
+            text: isPermanent
+              ? `🐰 ${banData.user} has been permanently banned!`
+              : `🐰 ${banData.user} has been banned.`,
+            emoji: true,
+          },
+        },
+        {
+          type: 'section',
+          fields: [
+            {
+              type: 'mrkdwn',
+              text: `*Reason:*\n${banData.reason || 'No reason provided'}`,
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Subreddit:*\nr/${banData.subreddit}`,
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Issuing Mod:*\n${banData.mod}`,
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Duration:*\n${durationText}`,
+            },
+          ],
+          accessory: {
+            type: 'image',
+            image_url: gifUrl,
+            alt_text: 'Ban celebration GIF',
+          },
+        },
+        {
+          type: 'context',
+          elements: [
+            {
+              type: 'mrkdwn',
+              text: `Banned at ${banTime}`,
+            },
+          ],
+        },
+      ],
+    };
+
+    // Send to Slack webhook
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(slackPayload),
+    });
+
+    if (!response.ok) {
+      console.error(`Slack webhook error: ${response.status} ${response.statusText}`);
+    } else {
+      console.log(`Slack notification sent for ban: ${banData.user}`);
+    }
+  } catch (error) {
+    console.error('Error sending Slack notification:', error);
+  }
+}
+
+async function sendNotifications(
+  context: TriggerContext,
+  banData: BanLogData
+): Promise<void> {
+  // Fetch GIF once for both notifications
+  const gifUrl = await fetchGiphy(context);
+
+  // Send to both platforms concurrently
+  await Promise.all([
+    sendDiscordNotification(context, banData, gifUrl),
+    sendSlackNotification(context, banData, gifUrl),
+  ]);
 }
 
 // ============================================================================
@@ -376,8 +520,8 @@ Devvit.addTrigger({
     // Store to Redis
     await storeBanLog(context, banData);
 
-    // Send Discord notification (only for new bans, not backfill)
-    await sendDiscordNotification(context, banData);
+    // Send notifications (only for new bans, not backfill)
+    await sendNotifications(context, banData);
   },
 });
 
