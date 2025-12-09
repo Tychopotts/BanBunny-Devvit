@@ -224,7 +224,7 @@ async function sendDiscordNotification(
 
     // Determine if permanent ban
     const isPermanent = !banData.duration || banData.duration === 'permanent';
-    const durationText = isPermanent ? 'Permanent' : `${banData.duration} days`;
+    const durationText = isPermanent ? 'Permanent' : banData.duration;
 
     // Build the embed
     const embed: DiscordEmbed = {
@@ -285,7 +285,7 @@ async function sendSlackNotification(
 
     // Determine if permanent ban
     const isPermanent = !banData.duration || banData.duration === 'permanent';
-    const durationText = isPermanent ? 'Permanent' : `${banData.duration} days`;
+    const durationText = isPermanent ? 'Permanent' : banData.duration;
     const banTime = new Date(parseInt(banData.timestamp)).toISOString();
 
     // Build Slack message with blocks for rich formatting
@@ -407,8 +407,8 @@ Devvit.addTrigger({
           banId: action.id,
           user: action.target?.author || 'unknown',
           mod: action.moderatorName || 'unknown',
-          reason: action.details || '',
-          duration: action.description || 'permanent',
+          reason: action.description || '',
+          duration: action.details || 'permanent',
           subreddit: subredditName,
           timestamp: action.createdAt.getTime().toString(),
         };
@@ -450,8 +450,8 @@ async function fetchBanDetails(
     for await (const action of modLog) {
       if (action.target?.author === targetUsername) {
         return {
-          reason: action.details || '',
-          duration: action.description || 'permanent',
+          reason: action.description || '',
+          duration: action.details || 'permanent',
         };
       }
     }
