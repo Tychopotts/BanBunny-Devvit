@@ -23,9 +23,13 @@ This project is a reimplementation of [BanBunny](https://github.com/GoddessOfTes
 
 - [Devvit Docs](https://developers.reddit.com/docs/) — Official platform documentation
 
-## Project Status
+## Latest Update
 
-🚧 **In Development**
+**v1.0.1** — December 2024
+- Fixed Giphy API domain configuration
+- Added Slack webhook support
+- Reorganized settings into groups (General, Discord, Slack)
+- Fixed ban duration display in notifications
 
 ## Getting Started
 
