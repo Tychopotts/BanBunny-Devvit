@@ -15,6 +15,21 @@ Devvit.configure({
 // ============================================================================
 
 Devvit.addSettings([
+  // General Settings
+  {
+    type: 'group',
+    label: 'General Settings',
+    helpText: 'Configure general app behavior',
+    fields: [
+      {
+        name: 'giphyApiKey',
+        label: 'Giphy API Key',
+        type: 'string',
+        scope: 'installation',
+        helpText: 'Optional. Get from developers.giphy.com. If not set, a default GIF will be used.',
+      },
+    ],
+  },
   // Discord Settings Group
   {
     type: 'group',
@@ -58,21 +73,6 @@ Devvit.addSettings([
         type: 'string',
         scope: 'installation',
         helpText: 'Required if Slack notifications are enabled. Get this from api.slack.com/apps → Incoming Webhooks',
-      },
-    ],
-  },
-  // General Settings
-  {
-    type: 'group',
-    label: 'General Settings',
-    helpText: 'Configure general app behavior',
-    fields: [
-      {
-        name: 'giphyApiKey',
-        label: 'Giphy API Key',
-        type: 'string',
-        scope: 'installation',
-        helpText: 'Optional. Get from developers.giphy.com. If not set, a default GIF will be used.',
       },
     ],
   },
