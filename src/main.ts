@@ -6,7 +6,7 @@ Devvit.configure({
   redis: true,
   http: {
     // Whitelist external domains for HTTP fetch
-    domains: ['api.giphy.com', 'discord.com', 'discordapp.com'],
+    domains: ['giphy.com','discord.com', 'discordapp.com'],
   },
 });
 
