@@ -25,7 +25,7 @@ This project is a reimplementation of [BanBunny](https://github.com/GoddessOfTes
 
 ## Latest Update
 
-**v1.0.1** — December 2024
+December 09 2024
 - Fixed Giphy API domain configuration
 - Added Slack webhook support
 - Reorganized settings into groups (General, Discord, Slack)
