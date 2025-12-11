@@ -125,4 +125,4 @@ See [LICENSE](https://github.com/Tychopotts/BanBunny-Devvit/blob/main/LICENSE) f
 
 - [Original BanBunny (.NET)](https://github.com/GoddessOfTest/BanBunny) — The original implementation
 - [Devvit Docs](https://developers.reddit.com/docs/) — Official platform documentation
-- ![Powered By GIPHY](https://github.com/Tychopotts/BanBunny-Devvit/blob/main/GIPHY_logo.png)
+- ![Powered By GIPHY](https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExcjFhamI0ZGt1amthbWYyanl1cnJwY2YzMHZodjVra3duZm5taWJ3MSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/1cfwIqOjbl6hMCFFPM/giphy.gif)
