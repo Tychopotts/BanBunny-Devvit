@@ -41,30 +41,6 @@ December 09 2024
 - A Discord server with webhook access and/or a Slack workspace with webhook access
 - A [Giphy API key](https://developers.giphy.com/)
 
-### Installation
-
-```bash
-# Install Devvit CLI
-npm install -g devvit
-
-# Login to Reddit
-devvit login
-
-# Clone and enter project
-cd BanBunny-Devvit
-
-# Install dependencies
-npm install
-
-# Upload app to Reddit (required before first playtest)
-devvit upload
-
-# Start development/testing on your subreddit
-devvit playtest <your-subreddit>
-```
-
-> **Note:** You must run `devvit upload` at least once to register your app with Reddit's servers before you can playtest. The upload command creates the app on Reddit's platform.
-
 ### Configuration
 
 After installing the app on your subreddit, configure it through Reddit's mod tools:
@@ -143,9 +119,11 @@ The app uses Redis for persistent storage:
 
 ## License
 
-See [LICENSE](LICENSE) for details.
+See [LICENSE](https://github.com/Tychopotts/BanBunny-Devvit/blob/main/LICENSE) for details.
 
 ## Related
 
 - [Original BanBunny (.NET)](https://github.com/GoddessOfTest/BanBunny) — The original implementation
 - [Devvit Docs](https://developers.reddit.com/docs/) — Official platform documentation
+- Powered By GIPHY
+https://github.com/Tychopotts/BanBunny-Devvit/blob/main/GIPHY_logo.png
